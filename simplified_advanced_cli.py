@@ -367,6 +367,93 @@ def analytics(ctx: AdvancedCLIContext):
     asyncio.run(show_analytics())
 
 @cli.command()
+@click.option('--prompt', '-p', required=True, help='Prompt to enhance')
+@click.option('--complexity', '-c', type=click.Choice(['basic', 'intermediate', 'advanced', 'expert', 'master']), 
+              default='master', help='Target complexity level')
+@click.option('--show-analysis/--no-analysis', default=True, help='Show detailed analysis')
+@click.pass_obj
+def enhance_prompt(ctx: AdvancedCLIContext, prompt, complexity, show_analysis):
+    """🚀 ENHANCE PROMPT TO MASTER LEVEL"""
+    
+    async def run_enhancement():
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console
+            ) as progress:
+                task = progress.add_task(f"🧠 Enhancing to {complexity.upper()} level...", total=None)
+                
+                result = await ctx.ai_engine.enhance_prompt(
+                    prompt=prompt,
+                    complexity=complexity
+                )
+                
+                progress.remove_task(task)
+            
+            # Display original prompt
+            console.print(Panel(
+                prompt,
+                title="📝 Original Prompt",
+                border_style="yellow"
+            ))
+            
+            # Display enhanced prompt
+            console.print(Panel(
+                result["enhanced"],
+                title=f"🚀 Enhanced {complexity.upper()} Level Prompt",
+                border_style="green"
+            ))
+            
+            # Display scores
+            scores_table = Table(title="📊 Enhancement Scores")
+            scores_table.add_column("Metric", style="cyan")
+            scores_table.add_column("Score", style="green")
+            
+            scores_table.add_row("Professional Score", f"{result.get('professional_score', 0):.1f}%")
+            scores_table.add_row("Complexity Score", f"{result.get('complexity_score', 0):.1f}%")
+            scores_table.add_row("Processing Time", f"{result.get('processing_time', 0):.3f}s")
+            scores_table.add_row("Enhancement Type", result.get('enhancement_type', 'unknown'))
+            
+            console.print(scores_table)
+            
+            # Show analysis if requested
+            if show_analysis and 'analysis' in result:
+                analysis = result['analysis']
+                analysis_table = Table(title="🔍 Prompt Analysis")
+                analysis_table.add_column("Aspect", style="cyan")
+                analysis_table.add_column("Value", style="white")
+                
+                analysis_table.add_row("Category", analysis.get('category', 'unknown'))
+                analysis_table.add_row("Domain", analysis.get('domain', 'unknown'))
+                analysis_table.add_row("Intent", analysis.get('intent', 'unknown'))
+                analysis_table.add_row("Tone", analysis.get('tone', 'unknown'))
+                analysis_table.add_row("Keywords", ', '.join(analysis.get('keywords', [])[:5]))
+                
+                console.print(analysis_table)
+            
+            # Show enhancements applied
+            if 'enhancements' in result and result['enhancements']:
+                enhancements_table = Table(title="✨ Enhancements Applied")
+                enhancements_table.add_column("Enhancement", style="green")
+                
+                for enhancement in result['enhancements'][:5]:
+                    enhancements_table.add_row(enhancement)
+                
+                console.print(enhancements_table)
+            
+            # Show metadata
+            if 'metadata' in result:
+                metadata = result['metadata']
+                console.print(f"\n[cyan]📈 Improvement Ratio: {metadata.get('improvement_ratio', 1):.1f}x[/cyan]")
+                console.print(f"[cyan]📏 Length: {metadata.get('original_length', 0)} → {metadata.get('enhanced_length', 0)} characters[/cyan]")
+        
+        except Exception as e:
+            console.print(f"[red]❌ Error: {e}[/red]")
+    
+    asyncio.run(run_enhancement())
+
+@cli.command()
 @click.pass_obj
 def health(ctx: AdvancedCLIContext):
     """🚀 COMPREHENSIVE HEALTH CHECK"""
